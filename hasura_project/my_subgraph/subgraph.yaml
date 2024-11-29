@@ -1,0 +1,8 @@
+kind: Subgraph
+version: v2
+definition:
+  name: my_subgraph
+  generator:
+    rootPath: .
+  includePaths:
+    - metadata
