@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:12
+    container_name: "db"
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "pg_isready"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api: # hasura
+    image: hasura/graphql-engine:v2.36.6@sha256:3fc234510962e66d5ca7db16734b8796a16fb729953915861953e974f976f30f
+    container_name: "api"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./api:/hasura/api
+    working_dir: /hasura/api
+    env_file:
+      - ./settings/.env
+    entrypoint: >
+      sh -c "
+      curl -L https://github.com/hasura/graphql-engine/raw/stable/cli/get.sh | bash &&
+      graphql-engine serve
+      "
+
+  app:
+    image: node:20-alpine@sha256:b5b9467fe7b33aad47f1ec3f6e0646a658f85f05c18d4243024212a91f3b7554
+    container_name: "app"
+    volumes:
+      - ./app:/app
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev"
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./settings/.env
+    stdin_open: true
+    tty: true
+
+volumes:
+  db-data:
